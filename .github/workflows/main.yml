@@ -18,11 +18,27 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
+
       - name: Show repository structure
         run: ls -R
 
-      - name: Restore dependencies
-        run: dotnet restore Weekly-Assignment-6.sln
+      - name: Find solution or project
+        id: find
+        run: |
+          SOLUTION=$(find . -name "*.sln" | head -n 1)
+          PROJECT=$(find . -name "*.csproj" | head -n 1)
 
-      - name: Run dotnet format (verify only)
-        run: dotnet format Weekly-Assignment-6.sln --verify-no-changes --verbosity diagnostic
+          if [ -n "$SOLUTION" ]; then
+            echo "workspace=$SOLUTION" >> $GITHUB_OUTPUT
+          elif [ -n "$PROJECT" ]; then
+            echo "workspace=$PROJECT" >> $GITHUB_OUTPUT
+          else
+            echo "❌ No .sln or .csproj found"
+            exit 1
+          fi
+
+      - name: Restore
+        run: dotnet restore ${{ steps.find.outputs.workspace }}
+
+      - name: Run dotnet format
+        run: dotnet format ${{ steps.find.outputs.workspace }} --verify-no-changes --verbosity diagnostic
