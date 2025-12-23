@@ -17,7 +17,14 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x' # Match this to your project version
+          dotnet-version: '8.0.x'
 
-      - name: Run dotnet format
-        run: dotnet format --verify-no-changes --verbosity diagnostic
+      # Optional but VERY useful for debugging CI issues
+      - name: Show repository structure
+        run: ls -R
+
+      - name: Restore dependencies
+        run: dotnet restore Weekly-Assignment-6.sln
+
+      - name: Run dotnet format (verify only)
+        run: dotnet format Weekly-Assignment-6.sln --verify-no-changes --verbosity diagnostic
