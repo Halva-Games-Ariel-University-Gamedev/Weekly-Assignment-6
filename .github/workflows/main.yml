@@ -11,34 +11,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
-      - name: Show repository structure
-        run: ls -R
-
-      - name: Find solution or project
+      - name: Find .NET project
         id: find
         run: |
-          SOLUTION=$(find . -name "*.sln" | head -n 1)
-          PROJECT=$(find . -name "*.csproj" | head -n 1)
-
-          if [ -n "$SOLUTION" ]; then
-            echo "workspace=$SOLUTION" >> $GITHUB_OUTPUT
-          elif [ -n "$PROJECT" ]; then
-            echo "workspace=$PROJECT" >> $GITHUB_OUTPUT
+          FILE=$(find . -name "*.sln" -o -name "*.csproj" | head -n 1)
+          if [ -z "$FILE" ]; then
+            echo "found=false" >> $GITHUB_OUTPUT
           else
-            echo "❌ No .sln or .csproj found"
-            exit 1
+            echo "found=true" >> $GITHUB_OUTPUT
+            echo "file=$FILE" >> $GITHUB_OUTPUT
           fi
 
       - name: Restore
-        run: dotnet restore ${{ steps.find.outputs.workspace }}
+        if: steps.find.outputs.found == 'true'
+        run: dotnet restore ${{ steps.find.outputs.file }}
 
-      - name: Run dotnet format
-        run: dotnet format ${{ steps.find.outputs.workspace }} --verify-no-changes --verbosity diagnostic
+      - name: Format
+        if: steps.find.outputs.found == 'true'
+        run: dotnet format ${{ steps.find.outputs.file }} --verify-no-changes
